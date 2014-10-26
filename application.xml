@@ -6,7 +6,7 @@
 	<meta title="stepman" package="stepman" version="1.0.0" company="damrem" />
 	
 	<!-- output -->
-	<app main="Main" file="stepman" path="bin" />
+	<app main="Main" file="stepman" path="bin" swf-version="11.6" />
 	
 	<window background="#000000" fps="60" />
 	<window width="800" height="480" unless="mobile" />
