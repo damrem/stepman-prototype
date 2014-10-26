@@ -16,6 +16,7 @@
 	<source path="src" />
 	<haxelib name="openfl" version="1.4.0" />
 	<haxelib name="spritesheet" version="1.2.0" />
+	<haxelib name="actuate" version="1.7.5" />
 	
 	<!-- assets -->
 	<icon path="assets/openfl.svg" />

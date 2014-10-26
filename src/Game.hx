@@ -1,6 +1,7 @@
 package ;
 
 import flash.display.Sprite;
+import flash.events.Event;
 import flash.events.KeyboardEvent;
 
 /**
@@ -9,28 +10,39 @@ import flash.events.KeyboardEvent;
  */
 class Game extends Sprite
 {
-	var hero:Hero;
+	var hero:SteppingHero;
 	
 	public function new() 
 	{
 		super();
-		hero = new Hero();
-		hero.x = hero.y = 100;
+		hero = new SteppingHero();
+		hero.x = 50;
+		hero.y = 400;
 		addChild(hero);
 	}
 	
 	public function start() 
 	{
-		addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
+		trace("start");
+		stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp);
+		addEventListener(Event.ENTER_FRAME, update);
+	}
+	
+	private function update(e:Event):Void 
+	{
+		hero.update();
 	}
 	
 	public function pause()
 	{
-		removeEventListener(KeyboardEvent.KEY_UP, onKeyUp);
+		trace("pause");
+		removeEventListener(Event.ENTER_FRAME, update);
+		stage.removeEventListener(KeyboardEvent.KEY_UP, onKeyUp);
 	}
 	
 	function onKeyUp(event:KeyboardEvent)
 	{
+		trace("onKeyUp");
 		hero.control();
 	}
 	
