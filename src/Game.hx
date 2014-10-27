@@ -9,9 +9,7 @@ import flash.text.TextField;
 import flash.text.TextFormat;
 import flash.text.TextFormatAlign;
 import hxlpers.Overlap;
-import hxlpers.Range;
 import hxlpers.Rnd;
-import hxlpers.shapes.Rect;
 //import h2d.Scene;
 
 @:font('assets/fonts/PressStart2P-Regular.ttf') class DefaultFont extends Font {}
@@ -36,9 +34,24 @@ class Game extends Sprite
 	var world:Sprite;
 	var hud:Sprite;
 	
+	var grounds:Array<Ground>;
+	
 	public function new() 
 	{
 		super();
+		
+		Font.registerFont(DefaultFont);
+		ftScore = new TextFormat(new DefaultFont().fontName , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
+		
+		mouseProvider = new MouseProvider();
+		mice = new Array<Mouse>();
+		
+		var groundProvider = new Provider<Ground>(Ground);
+		grounds = new Array<Ground>();
+		
+		world = new Sprite();
+		hud = new Sprite();
+		
 		
 		addEventListener(Event.ADDED_TO_STAGE, onStage);
 	}
@@ -47,11 +60,9 @@ class Game extends Sprite
 	{
 		removeEventListener(Event.ADDED_TO_STAGE, onStage);
 		
-		world = new Sprite();
 		world.scrollRect = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
 		addChild(world);
 		
-		hud = new Sprite();
 		addChild(hud);
 		
 		hero = new SteppingHero();
@@ -59,19 +70,16 @@ class Game extends Sprite
 		hero.y = stage.stageHeight - Ground.HEIGHT;
 		hero.onStep.add(incScore);
 		
-		mouseProvider = new MouseProvider();
-		mice = new Array<Mouse>();
-		
-		var ground = new Ground();
-		ground.y = stage.stageHeight - Ground.HEIGHT;
+		var ground1 = new Ground(stage.stageWidth, 0);
+		ground1.y = stage.stageHeight - Ground.HEIGHT;
+		var ground2 = new Ground(stage.stageWidth, ground1.finalHeightOffset);
+		ground2.y = stage.stageHeight - Ground.HEIGHT;
 
-		world.addChild(ground);
+		world.addChild(ground1);
+		world.addChild(ground2);
 		world.addChild(hero);
 		
-		Font.registerFont(DefaultFont);
-		
 		tfScore = new TextField();
-		ftScore = new TextFormat(new DefaultFont().fontName , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
 		tfScore.defaultTextFormat = ftScore;
 		tfScore.text = "" + score;
 		tfScore.x = stage.stageWidth - 20 - tfScore.width;
@@ -80,9 +88,6 @@ class Game extends Sprite
 		tfScore.selectable = false;
 		
 		hud.addChild(tfScore);
-		
-		
-		
 	}
 	
 	function incScore() 
