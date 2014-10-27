@@ -8,6 +8,7 @@ import flash.text.Font;
 import flash.text.TextField;
 import flash.text.TextFormat;
 import flash.text.TextFormatAlign;
+import hxlpers.Overlap;
 import hxlpers.Range;
 import hxlpers.Rnd;
 import hxlpers.shapes.Rect;
@@ -93,7 +94,7 @@ class Game extends Sprite
 		generateMice();
 		recycleMice();
 		
-		hero.alpha = hero.isSteppingDown()?1.0:0.5;
+		//hero.alpha = hero.isSteppingDown()?1.0:0.5;
 		
 		detectCollision();
 		//trace("backLeg.x", hero.x + hero.backLeg.x, "backLeg.y", hero.backLeg.y + SteppingHero.LEG_HEIGHT * 2);
@@ -112,9 +113,14 @@ class Game extends Sprite
 		for (mouse in collidableMouse)
 		{
 			var legBox:Rectangle = hero.backLeg.getBounds(this);
-			var range:Range = hero.getBackLegHRange();
-			range.add(hero.x);
-			trace(range);
+			var mouseBox:Rectangle = mouse.getBounds(this);
+			
+			if (Overlap.rectangles(legBox, mouseBox) && hero.isSteppingDown())
+			{
+				mouse.alpha = 0.25;
+			}
+			trace("legBox", legBox);
+			
 			//if(hero.isSteppingDown() && bound.x
 		}
 	}

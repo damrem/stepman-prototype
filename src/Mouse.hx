@@ -20,6 +20,7 @@ class Mouse extends Sprite
 	
 	public function renew()
 	{
+		alpha = 1.0;
 		speed = Rnd.float(1.0, 2.0);
 	}
 	
