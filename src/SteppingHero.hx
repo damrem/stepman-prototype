@@ -37,7 +37,7 @@ class SteppingHero extends Sprite
 	public var backLeg:Rect;
 	var frontLeg:Rect;
 	
-	var body:Rect;
+	public var body:Rect;
 	var head:Rect;
 	
 	public var onStep:Signal0;

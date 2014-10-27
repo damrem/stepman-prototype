@@ -22,7 +22,7 @@ import hxlpers.shapes.Rect;
  */
 class Game extends Sprite
 {
-	static public inline var GROUND_Y:Float = 400.0;
+	static public inline var WIDTH:Float = 1600.0;
 	static public inline var GRAVITY:Float = 2.0;
 	
 	var hero:SteppingHero;
@@ -32,6 +32,9 @@ class Game extends Sprite
 	var score:UInt;
 	var tfScore:TextField;
 	var ftScore:TextFormat;
+	
+	var world:Sprite;
+	var hud:Sprite;
 	
 	public function new() 
 	{
@@ -44,19 +47,26 @@ class Game extends Sprite
 	{
 		removeEventListener(Event.ADDED_TO_STAGE, onStage);
 		
+		world = new Sprite();
+		world.scrollRect = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
+		addChild(world);
+		
+		hud = new Sprite();
+		addChild(hud);
+		
 		hero = new SteppingHero();
 		hero.x = 50;
-		hero.y = GROUND_Y;
+		hero.y = stage.stageHeight - Ground.HEIGHT;
 		hero.onStep.add(incScore);
 		
 		mouseProvider = new MouseProvider();
 		mice = new Array<Mouse>();
 		
-		var ground = new Rect(800, 2, 0xff0000);
-		ground.y = GROUND_Y;
+		var ground = new Ground();
+		ground.y = stage.stageHeight - Ground.HEIGHT;
 
-		addChild(ground);
-		addChild(hero);
+		world.addChild(ground);
+		world.addChild(hero);
 		
 		Font.registerFont(DefaultFont);
 		
@@ -69,7 +79,10 @@ class Game extends Sprite
 		tfScore.embedFonts = true;
 		tfScore.selectable = false;
 		
-		addChild(tfScore);
+		hud.addChild(tfScore);
+		
+		
+		
 	}
 	
 	function incScore() 
@@ -98,6 +111,17 @@ class Game extends Sprite
 		
 		detectCollision();
 		//trace("backLeg.x", hero.x + hero.backLeg.x, "backLeg.y", hero.backLeg.y + SteppingHero.LEG_HEIGHT * 2);
+		
+		scroll();
+	}
+	
+	function scroll() 
+	{
+		var rect = world.scrollRect;
+		rect.x = hero.body.x - stage.stageWidth/2;
+		world.scrollRect = rect;
+		//trace("body.x", hero.body.x);
+		trace("scrollRect", scrollRect);
 	}
 	
 	function detectCollision()
@@ -119,9 +143,7 @@ class Game extends Sprite
 			{
 				mouse.alpha = 0.25;
 			}
-			trace("legBox", legBox);
 			
-			//if(hero.isSteppingDown() && bound.x
 		}
 	}
 	
@@ -131,8 +153,8 @@ class Game extends Sprite
 		{
 			var mouse = mouseProvider.provide();
 			mouse.x = 800;
-			mouse.y = GROUND_Y - mouse.height;
-			addChild(mouse);
+			mouse.y = stage.stageHeight - Ground.HEIGHT - mouse.height;
+			world.addChild(mouse);
 			mice.push(mouse);
 		}
 	}
@@ -144,9 +166,9 @@ class Game extends Sprite
 		{
 			var mouse = mice[i];
 			mouse.x -= mouse.speed;
-			if (mouse.x < -mouse.width)
+			if (mouse.x < -mouse.width && mouse.parent == this)
 			{
-				removeChild(mouse);
+				world.removeChild(mouse);
 				splices.push(i);
 				mouseProvider.retake(mouse);
 			}
