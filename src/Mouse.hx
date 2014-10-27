@@ -1,7 +1,7 @@
 package ;
 import flash.display.Sprite;
-import helpers.Rnd;
-import helpers.shapes.Rect;
+import hxlpers.Rnd;
+import hxlpers.shapes.Rect;
 
 /**
  * ...

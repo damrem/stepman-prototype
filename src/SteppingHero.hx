@@ -1,21 +1,12 @@
 package ;
 
 import flash.display.Sprite;
-import flash.Lib;
-import flash.utils.Function;
-import helpers.geom.V2d;
-import helpers.shapes.Rect;
-import motion.actuators.GenericActuator.IGenericActuator;
-import motion.easing.Linear;
-import msignal.Signal.Signal;
-import msignal.Signal.Signal0;
-import openfl.Assets;
-import spritesheet.AnimatedSprite;
-import spritesheet.data.BehaviorData;
-import spritesheet.importers.BitmapImporter;
-import spritesheet.Spritesheet;
+import hxlpers.Range;
+import hxlpers.shapes.Rect;
 import motion.Actuate;
+import motion.easing.Linear;
 import motion.MotionPath;
+import msignal.Signal.Signal0;
 
 /**
  * ...
@@ -43,12 +34,15 @@ class SteppingHero extends Sprite
 
 	var leftLeg:Rect;
 	var rightLeg:Rect;
-	var backLeg:Rect;
+	public var backLeg:Rect;
+	var frontLeg:Rect;
 	
 	var body:Rect;
 	var head:Rect;
 	
 	public var onStep:Signal0;
+
+	var prevBackLegY:Float;
 	
 	public function new() 
 	{
@@ -65,7 +59,7 @@ class SteppingHero extends Sprite
 		leftLeg.y -= LEG_HEIGHT * 2;
 		addChild(leftLeg);
 		
-		rightLeg = new Rect(LEG_WIDTH, LEG_HEIGHT * 2);
+		rightLeg = frontLeg = new Rect(LEG_WIDTH, LEG_HEIGHT * 2);
 		rightLeg.x += STEP_HALFLENGTH / 2;
 		rightLeg.y -= LEG_HEIGHT * 2;
 		addChild(rightLeg);
@@ -98,22 +92,31 @@ class SteppingHero extends Sprite
 	public function advance()
 	{
 		trace("advance");
-		Actuate.resume(backLeg);
 		
 		switch(state)
 		{
 			case Standing:
+				trace("was Standing");
 				step();
 				
 			case Stepping:
+				trace("was Stepping");
 				
+			case Freezing:
+				trace("was Freezing");
+				state = Stepping;
+				Actuate.resume(backLeg);
 		}
 	}
 	
 	public function freeze()
 	{
 		trace("freeze");
-		Actuate.pause(backLeg);
+		if (state == Stepping)
+		{
+			state = Freezing;
+			Actuate.pause(backLeg);
+		}
 	}
 	
 	function step()
@@ -128,28 +131,43 @@ class SteppingHero extends Sprite
 	{
 		updateBody();
 		updateHead();
+		prevBackLegY = backLeg.y;
 	}
 	
 	function finishStep() 
 	{
+		trace("finishStep");
 		state = Standing;
 		onStep.dispatch();
 		if (backLeg == leftLeg)
 		{
 			backLeg = rightLeg;
+			frontLeg = leftLeg;
 		}
 		else
 		{
 			backLeg = leftLeg;
+			frontLeg = rightLeg;
 		}
 	}
 	
+	public function isSteppingDown():Bool
+	{
+		return state == Stepping && backLeg.x > frontLeg.x;
+	}
 	
+	public function getBackLegHRange():Range
+	{
+		var range = new Range(backLeg.x, backLeg.x + LEG_WIDTH);
+		return range;
+	}
 	
 }
 
 enum HeroState
 {
 	Standing;
+	Freezing;
 	Stepping;
 }
+

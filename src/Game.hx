@@ -3,14 +3,14 @@ package ;
 import flash.display.Sprite;
 import flash.events.Event;
 import flash.events.KeyboardEvent;
+import flash.geom.Rectangle;
 import flash.text.Font;
 import flash.text.TextField;
 import flash.text.TextFormat;
 import flash.text.TextFormatAlign;
-import helpers.geom.V2d;
-import helpers.Rnd;
-import helpers.shapes.Rect;
-import openfl.Assets;
+import hxlpers.Range;
+import hxlpers.Rnd;
+import hxlpers.shapes.Rect;
 //import h2d.Scene;
 
 @:font('assets/fonts/PressStart2P-Regular.ttf') class DefaultFont extends Font {}
@@ -77,6 +77,7 @@ class Game extends Sprite
 		score++;
 		tfScore.text = "" + score;
 		tfScore.setTextFormat(ftScore);
+		
 	}
 	
 	public function start() 
@@ -87,7 +88,38 @@ class Game extends Sprite
 		addEventListener(Event.ENTER_FRAME, update);
 	}
 	
-	private function update(e:Event):Void 
+	function update(e:Event):Void 
+	{
+		generateMice();
+		recycleMice();
+		
+		hero.alpha = hero.isSteppingDown()?1.0:0.5;
+		
+		detectCollision();
+		//trace("backLeg.x", hero.x + hero.backLeg.x, "backLeg.y", hero.backLeg.y + SteppingHero.LEG_HEIGHT * 2);
+	}
+	
+	function detectCollision()
+	{
+		var collidableMouse = new Array<Mouse>();
+		for (mouse in mice)
+		{
+			if (mouse.x >= hero.x)
+			{
+				collidableMouse.push(mouse);
+			}
+		}
+		for (mouse in collidableMouse)
+		{
+			var legBox:Rectangle = hero.backLeg.getBounds(this);
+			var range:Range = hero.getBackLegHRange();
+			range.add(hero.x);
+			trace(range);
+			//if(hero.isSteppingDown() && bound.x
+		}
+	}
+	
+	function generateMice()
 	{
 		if (Rnd.chance(0.01))
 		{
@@ -97,7 +129,10 @@ class Game extends Sprite
 			addChild(mouse);
 			mice.push(mouse);
 		}
-		
+	}
+	
+	function recycleMice()
+	{
 		var splices = new Array<UInt>();
 		for (i in 0...mice.length)
 		{
@@ -125,13 +160,11 @@ class Game extends Sprite
 	
 	function onKeyUp(event:KeyboardEvent)
 	{
-		trace("onKeyUp");
 		hero.freeze();
 	}
 	
 	function onKeyDown(event:KeyboardEvent)
 	{
-		trace("onKeyUp");
 		hero.advance();
 	}
 	

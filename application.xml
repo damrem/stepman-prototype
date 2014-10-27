@@ -15,10 +15,11 @@
 	<!-- classpath, haxe libs -->
 	<source path="src" />
 	<haxelib name="openfl" version="1.4.0" />
-	<haxelib name="spritesheet" version="1.2.0" />
+	<!--<haxelib name="spritesheet" version="1.2.0" />-->
 	<haxelib name="actuate" version="1.7.5" />
 	<haxelib name="msignal" version="1.2.2" />
-	<!--<haxelib name="lime" version="2.0.0-alpha.5" />-->
+	<haxelib name="hxlpers" />
+	<!--<haxelib name="lime" version="1.0.1" />-->
 	
 	<!-- assets -->
 	<icon path="assets/openfl.svg" />
