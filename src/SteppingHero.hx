@@ -38,11 +38,15 @@ class SteppingHero extends Sprite
 	static public inline var BODY_HALFWIDTH:Float = BODY_WIDTH / 2;
 	static public inline var BODY_HEIGHT:Float = BODY_WIDTH * 2;
 	
+	static public inline var HEAD_WIDTH:Float = 32;
+	static public inline var HEAD_HEIGHT:Float = HEAD_WIDTH * 2;
+
 	var leftLeg:Rect;
 	var rightLeg:Rect;
 	var backLeg:Rect;
 	
 	var body:Rect;
+	var head:Rect;
 	
 	public var onStep:Signal0;
 	
@@ -69,6 +73,11 @@ class SteppingHero extends Sprite
 		body = new Rect(BODY_WIDTH, BODY_HEIGHT);
 		updateBody();
 		addChild(body);
+		
+		head = new Rect(HEAD_WIDTH, HEAD_HEIGHT, 0xff0000);
+		updateHead();
+		addChild(head);
+		
 	}
 	
 	function updateBody() 
@@ -77,6 +86,13 @@ class SteppingHero extends Sprite
 		body.x = Math.min(leftLeg.x, rightLeg.x);
 		body.y = (leftLeg.y + rightLeg.y) / 4 - BODY_HEIGHT;// - LEG_HEIGHT;
 		body.width = Math.abs(rightLeg.x - leftLeg.x) + LEG_WIDTH;
+	}
+	
+	function updateHead()
+	{
+		head.x = body.x + (body.width - HEAD_WIDTH) / 2;
+		head.y = body.y - HEAD_HEIGHT;
+		
 	}
 	
 	public function advance()
@@ -105,7 +121,13 @@ class SteppingHero extends Sprite
 		trace("step");
 		state = Stepping;
 		var path = new MotionPath().bezier(backLeg.x + STEP_LENGTH, backLeg.y, backLeg.x + STEP_HALFLENGTH, backLeg.y - STEP_HEIGHT);
-		Actuate.motionPath(backLeg, STEP_DURATION, { x:path.x, y:path.y } ).ease(Linear.easeNone).onUpdate(updateBody).onComplete(finishStep);
+		Actuate.motionPath(backLeg, STEP_DURATION, { x:path.x, y:path.y } ).ease(Linear.easeNone).onUpdate(update).onComplete(finishStep);
+	}
+	
+	function update() 
+	{
+		updateBody();
+		updateHead();
 	}
 	
 	function finishStep() 

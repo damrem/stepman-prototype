@@ -105,6 +105,7 @@ class Game extends Sprite
 			mouse.x -= mouse.speed;
 			if (mouse.x < -mouse.width)
 			{
+				removeChild(mouse);
 				splices.push(i);
 				mouseProvider.retake(mouse);
 			}
