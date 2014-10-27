@@ -36,6 +36,13 @@ class Game extends Sprite
 	{
 		super();
 		
+		addEventListener(Event.ADDED_TO_STAGE, onStage);
+	}
+	
+	function onStage(e:Event)
+	{
+		removeEventListener(Event.ADDED_TO_STAGE, onStage);
+		
 		hero = new SteppingHero();
 		hero.x = 50;
 		hero.y = GROUND_Y;
@@ -51,22 +58,16 @@ class Game extends Sprite
 		addChild(hero);
 		
 		Font.registerFont(DefaultFont);
-		trace(new DefaultFont().fontName);
 		
 		tfScore = new TextField();
-		tfScore.border = true;
-		tfScore.borderColor = 0xff0000;
-		tfScore.background = true;
-		tfScore.backgroundColor = 0xff0000;
-		//tfScore.width = 100;
-		tfScore.text = "zefzefzefzef" + 0;
-		tfScore.x = 20;
+		ftScore = new TextFormat(new DefaultFont().fontName , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
+		tfScore.defaultTextFormat = ftScore;
+		tfScore.text = "" + score;
+		tfScore.x = stage.stageWidth - 20 - tfScore.width;
 		tfScore.y = 20;
 		tfScore.embedFonts = true;
 		tfScore.selectable = false;
 		
-		ftScore = new TextFormat('Press Start 2P', 32.0);// , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
-		tfScore.defaultTextFormat = ftScore;
 		addChild(tfScore);
 	}
 	
