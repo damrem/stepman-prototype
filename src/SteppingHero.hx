@@ -2,10 +2,13 @@ package ;
 
 import flash.display.Sprite;
 import flash.Lib;
+import flash.utils.Function;
 import helpers.geom.V2d;
 import helpers.shapes.Rect;
 import motion.actuators.GenericActuator.IGenericActuator;
 import motion.easing.Linear;
+import msignal.Signal.Signal;
+import msignal.Signal.Signal0;
 import openfl.Assets;
 import spritesheet.AnimatedSprite;
 import spritesheet.data.BehaviorData;
@@ -26,9 +29,9 @@ class SteppingHero extends Sprite
 	static public inline var LEG_WIDTH:Float = 16.0;
 	static public inline var LEG_HEIGHT:Float = 48.0;
 	
-	static public inline var STEP_LENGTH:Float = 96.0;
+	static public inline var STEP_LENGTH:Float = 128.0;
 	static public inline var STEP_HALFLENGTH:Float = STEP_LENGTH / 2;
-	static public inline var STEP_HEIGHT:Float = STEP_LENGTH / 4;
+	static public inline var STEP_HEIGHT:Float = STEP_LENGTH / 2;
 	static public inline var STEP_DURATION:Float = 0.25;
 	
 	static public inline var BODY_WIDTH:Float = STEP_HALFLENGTH + LEG_WIDTH;
@@ -41,8 +44,7 @@ class SteppingHero extends Sprite
 	
 	var body:Rect;
 	
-	public var velocity:V2d;
-	public var acceleration:V2d;
+	public var onStep:Signal0;
 	
 	public function new() 
 	{
@@ -50,19 +52,18 @@ class SteppingHero extends Sprite
 		
 		trace("new");
 		
+		onStep = new Signal0();
+		
 		state = Standing;
 		
-		acceleration = new V2d();
-		velocity = new V2d();
-		
-		leftLeg = backLeg = new Rect(LEG_WIDTH, LEG_HEIGHT);
+		leftLeg = backLeg = new Rect(LEG_WIDTH, LEG_HEIGHT * 2);
 		leftLeg.x -= STEP_HALFLENGTH / 2;
-		leftLeg.y -= LEG_HEIGHT;
+		leftLeg.y -= LEG_HEIGHT * 2;
 		addChild(leftLeg);
 		
-		rightLeg = new Rect(LEG_WIDTH, LEG_HEIGHT);
+		rightLeg = new Rect(LEG_WIDTH, LEG_HEIGHT * 2);
 		rightLeg.x += STEP_HALFLENGTH / 2;
-		rightLeg.y -= LEG_HEIGHT;
+		rightLeg.y -= LEG_HEIGHT * 2;
 		addChild(rightLeg);
 		
 		body = new Rect(BODY_WIDTH, BODY_HEIGHT);
@@ -74,22 +75,14 @@ class SteppingHero extends Sprite
 	{
 		//body.x = (leftLeg.x + rightLeg.x) / 2 - LEG_WIDTH * 2;
 		body.x = Math.min(leftLeg.x, rightLeg.x);
-		body.y = (leftLeg.y + rightLeg.y) / 2 - BODY_HEIGHT + 8;// - LEG_HEIGHT;
+		body.y = (leftLeg.y + rightLeg.y) / 4 - BODY_HEIGHT;// - LEG_HEIGHT;
 		body.width = Math.abs(rightLeg.x - leftLeg.x) + LEG_WIDTH;
 	}
 	
-	public function update()
+	public function advance()
 	{
-		velocity.x += acceleration.x;
-		velocity.y += acceleration.y;
-		//trace("velocity", velocity);
-		x += velocity.x;
-		y += velocity.y;
-	}
-	
-	public function control()
-	{
-		trace("control");
+		trace("advance");
+		Actuate.resume(backLeg);
 		
 		switch(state)
 		{
@@ -97,26 +90,14 @@ class SteppingHero extends Sprite
 				step();
 				
 			case Stepping:
-				jump();
-			
-			case Jumping:
-				land();
+				
 		}
 	}
 	
-	function land() 
+	public function freeze()
 	{
-		Actuate.resume(backLeg);
-	}
-	
-	function jump() 
-	{
-		trace("jump");
-		state = Jumping;
+		trace("freeze");
 		Actuate.pause(backLeg);
-		
-		acceleration.y -= 10;
-		trace("acceleration", acceleration);
 	}
 	
 	function step()
@@ -130,6 +111,7 @@ class SteppingHero extends Sprite
 	function finishStep() 
 	{
 		state = Standing;
+		onStep.dispatch();
 		if (backLeg == leftLeg)
 		{
 			backLeg = rightLeg;
@@ -148,5 +130,4 @@ enum HeroState
 {
 	Standing;
 	Stepping;
-	Jumping;
 }
