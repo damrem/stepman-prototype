@@ -8,9 +8,8 @@ import flash.text.Font;
 import flash.text.TextField;
 import flash.text.TextFormat;
 import flash.text.TextFormatAlign;
-import hxlpers.Range;
+import hxlpers.Overlap;
 import hxlpers.Rnd;
-import hxlpers.shapes.Rect;
 //import h2d.Scene;
 
 @:font('assets/fonts/PressStart2P-Regular.ttf') class DefaultFont extends Font {}
@@ -21,7 +20,7 @@ import hxlpers.shapes.Rect;
  */
 class Game extends Sprite
 {
-	static public inline var GROUND_Y:Float = 400.0;
+	static public inline var WIDTH:Float = 1600.0;
 	static public inline var GRAVITY:Float = 2.0;
 	
 	var hero:SteppingHero;
@@ -32,9 +31,27 @@ class Game extends Sprite
 	var tfScore:TextField;
 	var ftScore:TextFormat;
 	
+	var world:Sprite;
+	var hud:Sprite;
+	
+	var grounds:Array<Ground>;
+	
 	public function new() 
 	{
 		super();
+		
+		Font.registerFont(DefaultFont);
+		ftScore = new TextFormat(new DefaultFont().fontName , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
+		
+		mouseProvider = new MouseProvider();
+		mice = new Array<Mouse>();
+		
+		var groundProvider = new Provider<Ground>(Ground);
+		grounds = new Array<Ground>();
+		
+		world = new Sprite();
+		hud = new Sprite();
+		
 		
 		addEventListener(Event.ADDED_TO_STAGE, onStage);
 	}
@@ -43,24 +60,26 @@ class Game extends Sprite
 	{
 		removeEventListener(Event.ADDED_TO_STAGE, onStage);
 		
+		world.scrollRect = new Rectangle(0, 0, stage.stageWidth, stage.stageHeight);
+		addChild(world);
+		
+		addChild(hud);
+		
 		hero = new SteppingHero();
 		hero.x = 50;
-		hero.y = GROUND_Y;
+		hero.y = stage.stageHeight - Ground.HEIGHT;
 		hero.onStep.add(incScore);
 		
-		mouseProvider = new MouseProvider();
-		mice = new Array<Mouse>();
-		
-		var ground = new Rect(800, 2, 0xff0000);
-		ground.y = GROUND_Y;
+		var ground1 = new Ground(stage.stageWidth, 0);
+		ground1.y = stage.stageHeight - Ground.HEIGHT;
+		var ground2 = new Ground(stage.stageWidth, ground1.finalHeightOffset);
+		ground2.y = stage.stageHeight - Ground.HEIGHT;
 
-		addChild(ground);
-		addChild(hero);
-		
-		Font.registerFont(DefaultFont);
+		world.addChild(ground1);
+		world.addChild(ground2);
+		world.addChild(hero);
 		
 		tfScore = new TextField();
-		ftScore = new TextFormat(new DefaultFont().fontName , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
 		tfScore.defaultTextFormat = ftScore;
 		tfScore.text = "" + score;
 		tfScore.x = stage.stageWidth - 20 - tfScore.width;
@@ -68,7 +87,7 @@ class Game extends Sprite
 		tfScore.embedFonts = true;
 		tfScore.selectable = false;
 		
-		addChild(tfScore);
+		hud.addChild(tfScore);
 	}
 	
 	function incScore() 
@@ -93,10 +112,21 @@ class Game extends Sprite
 		generateMice();
 		recycleMice();
 		
-		hero.alpha = hero.isSteppingDown()?1.0:0.5;
+		//hero.alpha = hero.isSteppingDown()?1.0:0.5;
 		
 		detectCollision();
 		//trace("backLeg.x", hero.x + hero.backLeg.x, "backLeg.y", hero.backLeg.y + SteppingHero.LEG_HEIGHT * 2);
+		
+		scroll();
+	}
+	
+	function scroll() 
+	{
+		var rect = world.scrollRect;
+		rect.x = hero.body.x - stage.stageWidth/2;
+		world.scrollRect = rect;
+		//trace("body.x", hero.body.x);
+		trace("scrollRect", scrollRect);
 	}
 	
 	function detectCollision()
@@ -112,10 +142,13 @@ class Game extends Sprite
 		for (mouse in collidableMouse)
 		{
 			var legBox:Rectangle = hero.backLeg.getBounds(this);
-			var range:Range = hero.getBackLegHRange();
-			range.add(hero.x);
-			trace(range);
-			//if(hero.isSteppingDown() && bound.x
+			var mouseBox:Rectangle = mouse.getBounds(this);
+			
+			if (Overlap.rectangles(legBox, mouseBox) && hero.isSteppingDown())
+			{
+				mouse.alpha = 0.25;
+			}
+			
 		}
 	}
 	
@@ -125,8 +158,8 @@ class Game extends Sprite
 		{
 			var mouse = mouseProvider.provide();
 			mouse.x = 800;
-			mouse.y = GROUND_Y - mouse.height;
-			addChild(mouse);
+			mouse.y = stage.stageHeight - Ground.HEIGHT - mouse.height;
+			world.addChild(mouse);
 			mice.push(mouse);
 		}
 	}
@@ -138,9 +171,9 @@ class Game extends Sprite
 		{
 			var mouse = mice[i];
 			mouse.x -= mouse.speed;
-			if (mouse.x < -mouse.width)
+			if (mouse.x < -mouse.width && mouse.parent == this)
 			{
-				removeChild(mouse);
+				world.removeChild(mouse);
 				splices.push(i);
 				mouseProvider.retake(mouse);
 			}
