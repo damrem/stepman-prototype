@@ -35,6 +35,7 @@ class Game extends Sprite
 	var hud:Sprite;
 	
 	var grounds:Array<Ground>;
+	var groundProvider:Provider<Ground>;
 	
 	public function new() 
 	{
@@ -46,7 +47,7 @@ class Game extends Sprite
 		mouseProvider = new MouseProvider();
 		mice = new Array<Mouse>();
 		
-		var groundProvider = new Provider<Ground>(Ground);
+		groundProvider = new Provider<Ground>(Ground);
 		grounds = new Array<Ground>();
 		
 		world = new Sprite();
@@ -66,18 +67,22 @@ class Game extends Sprite
 		addChild(hud);
 		
 		hero = new SteppingHero();
-		hero.x = 50;
+		//hero.x = 50;
 		hero.y = stage.stageHeight - Ground.HEIGHT;
 		hero.onStep.add(incScore);
 		
-		var ground1 = new Ground(stage.stageWidth, 0);
-		ground1.y = stage.stageHeight - Ground.HEIGHT;
-		var ground2 = new Ground(stage.stageWidth, ground1.finalHeightOffset);
-		ground2.y = stage.stageHeight - Ground.HEIGHT;
+		Ground.WIDTH = stage.stageWidth;
+		
+		grounds.push(groundProvider.provide());
+		grounds.push(groundProvider.provide());
+		grounds[1].x = Ground.WIDTH;
+		grounds[0].y = grounds[1].y = stage.stageHeight - Ground.HEIGHT;
 
-		world.addChild(ground1);
-		world.addChild(ground2);
+		world.addChild(grounds[0]);
+		world.addChild(grounds[1]);
 		world.addChild(hero);
+
+		trace(grounds[0].getBounds(world));
 		
 		tfScore = new TextField();
 		tfScore.defaultTextFormat = ftScore;
@@ -125,8 +130,22 @@ class Game extends Sprite
 		var rect = world.scrollRect;
 		rect.x = hero.body.x - stage.stageWidth/2;
 		world.scrollRect = rect;
-		//trace("body.x", hero.body.x);
-		trace("scrollRect", scrollRect);
+		
+		trace("world.scrollRect", world.scrollRect);
+		
+		for (ground in grounds)
+		{
+			if (ground.getBounds(world).x < world.scrollRect.x - Ground.WIDTH)
+			{
+				ground.x += Ground.WIDTH * 2;
+			}
+			trace(ground.getBounds(stage));
+			//ground.x = 
+			if (ground.getBounds(world).x < world.scrollRect.x)
+			{
+				
+			}
+		}
 	}
 	
 	function detectCollision()
