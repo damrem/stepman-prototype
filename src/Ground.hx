@@ -9,7 +9,7 @@ import hxlpers.shapes.Rect;
  * ...
  * @author damrem
  */
-class Ground extends Sprite implements IRenewable
+class Ground extends Sprite
 {
 	static public var WIDTH:Float = 800.0;
 	static public inline var HEIGHT:Float = 64.0;
@@ -23,13 +23,7 @@ class Ground extends Sprite implements IRenewable
 		trace("new");
 		shape = new Shape();
 		addChild(shape);
-		renew();
-	}
-	
-	/* INTERFACE IRenewable */
-	public function renew():Void 
-	{
-		trace("renew");
+		
 		var g = shape.graphics;
 		g.clear();
 		g.beginFill(0xff0000);

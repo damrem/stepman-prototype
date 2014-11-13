@@ -7,7 +7,7 @@ import hxlpers.shapes.Rect;
  * ...
  * @author damrem
  */
-class Mouse extends Sprite
+class Mouse extends Sprite implements IRenewable
 {
 	public var speed:Float;
 	

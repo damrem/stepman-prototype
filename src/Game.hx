@@ -1,5 +1,7 @@
 package ;
 
+import openfl.text.TextFieldAutoSize;
+import openfl.utils.Object;
 import flash.display.Sprite;
 import flash.events.Event;
 import flash.events.KeyboardEvent;
@@ -20,12 +22,10 @@ import hxlpers.Rnd;
  */
 class Game extends Sprite
 {
-	static public inline var WIDTH:Float = 1600.0;
-	static public inline var GRAVITY:Float = 2.0;
-	
+	public static var verbose:Bool = true;
 	var hero:SteppingHero;
 	var mice:Array<Mouse>;
-	var mouseProvider:MouseProvider;
+	var mouseProvider:Provider<Mouse>;
 	
 	var score:UInt;
 	var tfScore:TextField;
@@ -35,7 +35,10 @@ class Game extends Sprite
 	var hud:Sprite;
 	
 	var grounds:Array<Ground>;
-	var groundProvider:Provider<Ground>;
+	
+	var watcheds:Array<Watched>;
+	var monitor:TextField;
+	var collidableMice:Array<Mouse>;
 	
 	public function new() 
 	{
@@ -44,16 +47,26 @@ class Game extends Sprite
 		Font.registerFont(DefaultFont);
 		ftScore = new TextFormat(new DefaultFont().fontName , 32.0, 0xff0000, true, false, false, null, null, TextFormatAlign.RIGHT);
 		
-		mouseProvider = new MouseProvider();
-		mice = new Array<Mouse>();
+		watcheds = new Array<Watched>();
+		monitor = new TextField();
+		monitor.background = true;
+		monitor.autoSize = TextFieldAutoSize.LEFT;
 		
-		groundProvider = new Provider<Ground>(Ground);
+		mouseProvider = new Provider<Mouse>(Mouse);
+		watch(mouseProvider, 'nbProvided', "mouseProvider");
+		watch(mouseProvider, 'nbRetaken', "mouseProvider");
+		mice = new Array<Mouse>();
+		watch(mice, 'length', "mice");
+		
+		collidableMice = new Array<Mouse>();
+		watch(collidableMice, 'length', "collidable");
+		
 		grounds = new Array<Ground>();
 		
 		world = new Sprite();
+		watch(world, 'scrollRect', "world");
 		hud = new Sprite();
-		
-		
+				
 		addEventListener(Event.ADDED_TO_STAGE, onStage);
 	}
 	
@@ -73,8 +86,8 @@ class Game extends Sprite
 		
 		Ground.WIDTH = stage.stageWidth;
 		
-		grounds.push(groundProvider.provide());
-		grounds.push(groundProvider.provide());
+		grounds.push(new Ground());
+		grounds.push(new Ground());
 		grounds[1].x = Ground.WIDTH;
 		grounds[0].y = grounds[1].y = stage.stageHeight - Ground.HEIGHT;
 
@@ -93,6 +106,8 @@ class Game extends Sprite
 		tfScore.selectable = false;
 		
 		hud.addChild(tfScore);
+		
+		addChild(monitor);
 	}
 	
 	function incScore() 
@@ -123,6 +138,17 @@ class Game extends Sprite
 		//trace("backLeg.x", hero.x + hero.backLeg.x, "backLeg.y", hero.backLeg.y + SteppingHero.LEG_HEIGHT * 2);
 		
 		scroll();
+		
+		updateMonitor();
+	}
+	
+	function updateMonitor() 
+	{
+		monitor.text = "";
+		for (watched in watcheds)
+		{
+			monitor.text += (watched.label == ""? watched.obj: watched.label) + "." + watched.prop + " = " + Reflect.field(watched.obj, watched.prop) + "\n";
+		}
 	}
 	
 	function scroll() 
@@ -131,7 +157,7 @@ class Game extends Sprite
 		rect.x = hero.body.x - stage.stageWidth/2;
 		world.scrollRect = rect;
 		
-		trace("world.scrollRect", world.scrollRect);
+		//trace("world.scrollRect", world.scrollRect);
 		
 		for (ground in grounds)
 		{
@@ -139,29 +165,30 @@ class Game extends Sprite
 			{
 				ground.x += Ground.WIDTH * 2;
 			}
-			trace(ground.getBounds(stage));
-			//ground.x = 
-			if (ground.getBounds(world).x < world.scrollRect.x)
-			{
-				
-			}
 		}
 	}
 	
 	function detectCollision()
 	{
-		var collidableMouse = new Array<Mouse>();
+		untyped collidableMice.length = 0;
+		//trace("hero", hero.body.x);
 		for (mouse in mice)
 		{
-			if (mouse.x >= hero.x)
+			//trace("mouse", mouse.x);
+			if (mouse.x >= hero.body.x)
 			{
-				collidableMouse.push(mouse);
+				collidableMice.push(mouse);
 			}
+			else
+			{
+				mouse.alpha = 0.75;
+			}
+			
 		}
-		for (mouse in collidableMouse)
+		for (mouse in collidableMice)
 		{
-			var legBox:Rectangle = hero.backLeg.getBounds(this);
-			var mouseBox:Rectangle = mouse.getBounds(this);
+			var legBox:Rectangle = hero.backLeg.getBounds(world);
+			var mouseBox:Rectangle = mouse.getBounds(world);
 			
 			if (Overlap.rectangles(legBox, mouseBox) && hero.isSteppingDown())
 			{
@@ -173,10 +200,10 @@ class Game extends Sprite
 	
 	function generateMice()
 	{
-		if (Rnd.chance(0.01))
+		if (Rnd.chance(0.1))
 		{
 			var mouse = mouseProvider.provide();
-			mouse.x = 800;
+			mouse.x = world.scrollRect.x + world.scrollRect.width;
 			mouse.y = stage.stageHeight - Ground.HEIGHT - mouse.height;
 			world.addChild(mouse);
 			mice.push(mouse);
@@ -190,9 +217,11 @@ class Game extends Sprite
 		{
 			var mouse = mice[i];
 			mouse.x -= mouse.speed;
-			if (mouse.x < -mouse.width && mouse.parent == this)
+			if (mouse.x < world.scrollRect.x - mouse.width && mouse.parent != null)
 			{
-				world.removeChild(mouse);
+				if (verbose)	trace("recycleMice");
+				mouse.y -= 100;
+				mouse.parent.removeChild(mouse);
 				splices.push(i);
 				mouseProvider.retake(mouse);
 			}
@@ -220,6 +249,15 @@ class Game extends Sprite
 		hero.advance();
 	}
 	
+	function watch(obj:Object, prop:String, ?label:String = "")
+	{		
+		watcheds.push({ obj:obj, prop:prop, label:label });
+	}
 	
-	
+}
+
+typedef Watched = {
+	var obj:Object;
+	var prop:String;
+	var label:String;
 }
