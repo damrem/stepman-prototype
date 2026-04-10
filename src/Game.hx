@@ -24,8 +24,8 @@ class Game extends Sprite
 {
 	public static var verbose:Bool = true;
 	var hero:SteppingHero;
-	var mice:Array<Mouse>;
-	var mouseProvider:Provider<Mouse>;
+	var dwarves:Array<Dwarf>;
+	var dwarfProvider:Provider<Dwarf>;
 	
 	var score:UInt;
 	var tfScore:TextField;
@@ -38,7 +38,7 @@ class Game extends Sprite
 	
 	var watcheds:Array<Watched>;
 	var monitor:TextField;
-	var collidableMice:Array<Mouse>;
+	var collidableDwarves:Array<Dwarf>;
 	
 	public function new() 
 	{
@@ -52,14 +52,14 @@ class Game extends Sprite
 		monitor.background = true;
 		monitor.autoSize = TextFieldAutoSize.LEFT;
 		
-		mouseProvider = new Provider<Mouse>(Mouse);
-		watch(mouseProvider, 'nbProvided', "mouseProvider");
-		watch(mouseProvider, 'nbRetaken', "mouseProvider");
-		mice = new Array<Mouse>();
-		watch(mice, 'length', "mice");
+		dwarfProvider = new Provider<Dwarf>(Dwarf);
+		watch(dwarfProvider, 'nbProvided', "dwarfProvider");
+		watch(dwarfProvider, 'nbRetaken', "dwarfProvider");
+		dwarves = new Array<Dwarf>();
+		watch(dwarves, 'length', "dwarves");
 		
-		collidableMice = new Array<Mouse>();
-		watch(collidableMice, 'length', "collidable");
+		collidableDwarves = new Array<Dwarf>();
+		watch(collidableDwarves, 'length', "collidable");
 		
 		grounds = new Array<Ground>();
 		
@@ -129,12 +129,12 @@ class Game extends Sprite
 	
 	function update(e:Event):Void 
 	{
-		generateMice();
-		recycleMice();
+		generateDwarves();
 		
 		//hero.alpha = hero.isSteppingDown()?1.0:0.5;
 		
 		detectCollision();
+		recycleDwarves();
 		//trace("backLeg.x", hero.x + hero.backLeg.x, "backLeg.y", hero.backLeg.y + SteppingHero.LEG_HEIGHT * 2);
 		
 		scroll();
@@ -170,65 +170,77 @@ class Game extends Sprite
 	
 	function detectCollision()
 	{
-		untyped collidableMice.length = 0;
+		untyped collidableDwarves.length = 0;
 		//trace("hero", hero.body.x);
-		for (mouse in mice)
+		for (dwarf1 in dwarves)
 		{
-			//trace("mouse", mouse.x);
-			if (mouse.x >= hero.body.x)
+			//trace("dwarf", dwarf.x);
+			if (dwarf1.x >= hero.body.x)
 			{
-				collidableMice.push(mouse);
+				collidableDwarves.push(dwarf1);
 			}
 			else
 			{
-				mouse.alpha = 0.75;
+				
+				dwarf1.alpha = 0.75;
 			}
 			
 		}
-		for (mouse in collidableMice)
+		for (dwarf2 in collidableDwarves)
 		{
 			var legBox:Rectangle = hero.backLeg.getBounds(world);
-			var mouseBox:Rectangle = mouse.getBounds(world);
+			var dwarfBox:Rectangle = dwarf2.getBounds(world);
 			
-			if (Overlap.rectangles(legBox, mouseBox) && hero.isSteppingDown())
+			if (Overlap.rectangles(legBox, dwarfBox) && hero.isSteppingDown())
 			{
-				mouse.alpha = 0.25;
+				dwarf2.alpha = 0.25;
 			}
 			
 		}
 	}
 	
-	function generateMice()
+	function generateDwarves()
 	{
 		if (Rnd.chance(0.1))
 		{
-			var mouse = mouseProvider.provide();
-			mouse.x = world.scrollRect.x + world.scrollRect.width;
-			mouse.y = stage.stageHeight - Ground.HEIGHT - mouse.height;
-			world.addChild(mouse);
-			mice.push(mouse);
+			var dwarf = dwarfProvider.provide();
+			dwarf.x = world.scrollRect.x + world.scrollRect.width;
+			dwarf.y = stage.stageHeight - Ground.HEIGHT - dwarf.height;
+			world.addChild(dwarf);
+			if (verbose && dwarves.indexOf(dwarf) >= 0)	trace("dwarf already in dwarves");
+			dwarves.push(dwarf);
 		}
 	}
 	
-	function recycleMice()
+	function recycleDwarves()
 	{
 		var splices = new Array<UInt>();
-		for (i in 0...mice.length)
+		for (i in 0...dwarves.length)
 		{
-			var mouse = mice[i];
-			mouse.x -= mouse.speed;
-			if (mouse.x < world.scrollRect.x - mouse.width && mouse.parent != null)
+			var dwarf = dwarves[i];
+			dwarf.x -= dwarf.speed;
+			if (dwarf.x < world.scrollRect.x - dwarf.width)
 			{
-				if (verbose)	trace("recycleMice");
-				mouse.y -= 100;
-				mouse.parent.removeChild(mouse);
-				splices.push(i);
-				mouseProvider.retake(mouse);
+				if (verbose && dwarf.parent == null)	trace("parent null");
+				if(dwarf.parent != null)
+				try
+				{
+					if (verbose)	trace("recycleDwarves");
+					dwarf.parent.removeChild(dwarf);
+					splices.push(i);
+					dwarfProvider.retake(dwarf);
+				}
+				catch (msg:String)
+				{
+					if(verbose)	trace(msg+":"+i);
+				}
 			}
 		}
+		trace(splices);
 		for (i in 0...splices.length)
 		{
-			mice.splice(splices[i], 1);
+			dwarves[splices[i]].y = 250;
+			dwarves.splice(splices[i], 1);
 		}
 	}
 	

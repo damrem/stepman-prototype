@@ -6,6 +6,7 @@ package ;
  */
 class Provider<T:IRenewable>
 {
+	public static var verbose:Bool;
 	var unused:Array<T>;
 	var cl:Class<T>;
 	public var nbProvided:UInt;
@@ -13,7 +14,7 @@ class Provider<T:IRenewable>
 	
 	public function new(Cl:Class<T>, size:UInt=256) 
 	{
-		trace("new");
+		if(verbose) trace("new");
 		cl = Cl;
 		unused = new Array<T>();
 		
@@ -24,13 +25,13 @@ class Provider<T:IRenewable>
 		{
 			unused.push(Type.createInstance(cl, []));
 		}
-		//trace("unusedMice", unusedMice);
+		//if(verbose) trace("unusedMice", unusedMice);
 	}
 	
 	public function provide():T
 	{
-		trace("provide");
-		//trace("unusedMice", unusedMice);
+		if(verbose) trace("provide");
+		//if(verbose) trace("unusedMice", unusedMice);
 		var item:T;
 		if (unused.length > 0)
 		{
@@ -47,7 +48,7 @@ class Provider<T:IRenewable>
 	
 	public function retake(item:T):T
 	{
-		trace("retake");
+		if(verbose) trace("retake");
 		unused.push(item);
 		nbRetaken++;
 		return item;
